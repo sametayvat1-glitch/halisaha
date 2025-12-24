@@ -3,84 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halı Saha Kadrosu</title>
+    <title>Halı Saha Listesi</title>
     <style>
         body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 20px; }
-        .card { background: #1e1e1e; max-width: 400px; margin: auto; padding: 25px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        input { padding: 12px; width: 85%; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: #252525; color: white; font-size: 16px; }
+        .card { background: #1e1e1e; max-width: 400px; margin: auto; padding: 25px; border-radius: 15px; border: 1px solid #333; }
+        input { padding: 12px; width: 85%; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: #252525; color: white; }
         .btns { display: flex; gap: 10px; margin-bottom: 20px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; font-size: 14px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
         .btn-g { background: #2e7d32; } .btn-n { background: #c62828; }
-        .liste-alanı { display: flex; justify-content: space-between; text-align: left; background: #252525; padding: 15px; border-radius: 10px; min-height: 150px; }
-        .sutun { width: 48%; }
-        h4 { margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .isim { font-size: 14px; margin-bottom: 6px; color: #ddd; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        .list-area { display: flex; justify-content: space-between; text-align: left; background: #252525; padding: 15px; border-radius: 10px; min-height: 100px; }
+        .col { width: 48%; }
+        h4 { margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #444; }
+        .name { font-size: 14px; margin-bottom: 5px; color: #ddd; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>⚽ Halı Saha Listesi</h2>
-    <input type="text" id="ad" placeholder="Adını yaz...">
+    <input type="text" id="user-name" placeholder="Adını yaz...">
     <div class="btns">
-        <button class="btn-g" onclick="ekle(true)">GELİYORUM</button>
-        <button class="btn-n" onclick="ekle(false)">YOKUM</button>
+        <button class="btn-g" onclick="sendData(true)">GELİYORUM</button>
+        <button class="btn-n" onclick="sendData(false)">YOKUM</button>
     </div>
-    <div class="liste-alanı">
-        <div class="sutun">
-            <h4 style="color: #4caf50;">Gelenler</h4>
-            <div id="g-list"></div>
+    <div class="list-area">
+        <div class="col">
+            <h4 style="color: #4caf50;">GELENLER</h4>
+            <div id="gelenler"></div>
         </div>
-        <div class="sutun">
-            <h4 style="color: #f44336;">Gelmeyenler</h4>
-            <div id="n-list"></div>
+        <div class="col">
+            <h4 style="color: #f44336;">YOKLAR</h4>
+            <div id="gitmeyenler"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Senin Firebase URL'n
-    const api = "https://halisaha-47c07-default-rtdb.firebaseio.com/.json";
+    const url = "https://halisaha-47c07-default-rtdb.firebaseio.com/.json";
 
-    async function verileriGetir() {
-        try {
-            const yanit = await fetch(api);
-            const veriler = await yanit.json();
-            const gAlan = document.getElementById('g-list');
-            const nAlan = document.getElementById('n-list');
-            gAlan.innerHTML = ""; nAlan.innerHTML = "";
-            
-            if(veriler) {
-                Object.values(veriler).forEach(kisi => {
-                    const html = `<div class="isim">• ${kisi.isim}</div>`;
-                    // Ekleme yaparken kullandığımız 'durum' değişkenine göre ayırıyoruz
-                    if(kisi.durum === true) { gAlan.innerHTML += html; } 
-                    else { nAlan.innerHTML += html; }
-                });
-            }
-        } catch (hata) { console.log("Veri çekme hatası:", hata); }
+    async function updateList() {
+        const res = await fetch(url);
+        const data = await res.json();
+        const gList = document.getElementById('gelenler');
+        const nList = document.getElementById('gitmeyenler');
+        gList.innerHTML = ""; nList.innerHTML = "";
+        
+        if(data) {
+            Object.values(data).forEach(item => {
+                // Hem 'ad' hem 'isim' kontrolü yapıyoruz ki hata payı kalmasın
+                const nameToShow = item.ad || item.isim || "İsimsiz";
+                const div = `<div class="name">• ${nameToShow}</div>`;
+                if(item.durum === true) { gList.innerHTML += div; } 
+                else { nList.innerHTML += div; }
+            });
+        }
     }
 
-    async function ekle(geliyorMu) {
-        const isimInput = document.getElementById('ad').value;
-        if(!isimInput) { alert("Lütfen adını yaz!"); return; }
+    async function sendData(status) {
+        const input = document.getElementById('user-name');
+        if(!input.value) return alert("Adını yaz kanka!");
 
-        const yeniVeri = { isim: isimInput, durum: geliyorMu };
-
-        await fetch(api, {
+        await fetch(url, {
             method: 'POST',
-            body: JSON.stringify(yeniVeri)
+            body: JSON.stringify({ ad: input.value, durum: status })
         });
 
-        document.getElementById('ad').value = "";
-        verileriGetir(); // Hemen listeyi tazele
+        input.value = "";
+        updateList();
     }
 
-    // Sayfa açıldığında verileri çek
-    verileriGetir();
-    // Her 3 saniyede bir otomatik güncelle
-    setInterval(verileriGetir, 3000);
+    updateList();
+    setInterval(updateList, 3000);
 </script>
-
 </body>
 </html>
