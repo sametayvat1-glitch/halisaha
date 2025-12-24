@@ -3,64 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halı Saha Listesi</title>
+    <title>Halı Saha Kadrosu</title>
     <style>
         body { font-family: sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 20px; }
-        .card { background: #2c3e50; max-width: 400px; margin: auto; padding: 20px; border-radius: 15px; }
-        input { padding: 10px; width: 80%; margin-bottom: 10px; border-radius: 5px; border: none; }
+        .card { background: #2c3e50; max-width: 400px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        input { padding: 12px; width: 85%; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 16px; color: #000; }
         .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        button { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .gel { background: #27ae60; color: white; }
-        .git { background: #c0392b; color: white; }
-        .list-container { display: flex; justify-content: space-between; background: #34495e; padding: 10px; border-radius: 10px; }
-        ul { list-style: none; padding: 0; text-align: left; width: 45%; }
-        .g-renk { color: #2ecc71; }
-        .n-renk { color: #e74c3c; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        .gel { background: #27ae60; }
+        .git { background: #c0392b; }
+        .list-box { display: flex; justify-content: space-between; background: #34495e; padding: 15px; border-radius: 10px; text-align: left; min-height: 100px; }
+        h4 { margin-top: 0; border-bottom: 1px solid #555; padding-bottom: 5px; font-size: 14px; }
+        #gelenler { color: #2ecc71; font-size: 14px; }
+        #gitmeyenler { color: #e74c3c; font-size: 14px; }
+        .kisi { margin-bottom: 4px; border-bottom: 1px dashed #444; padding-bottom: 2px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>⚽ Halı Saha Kadrosu</h2>
-    <input type="text" id="isim" placeholder="Adını yaz...">
+    <input type="text" id="adSoyad" placeholder="Adınızı yazınız...">
     <div class="btn-group">
-        <button class="gel" onclick="gonder(true)">GELİYORUM</button>
-        <button class="git" onclick="gonder(false)">GELMİYORUM</button>
+        <button class="gel" onclick="verigonder(true)">GELİYORUM</button>
+        <button class="git" onclick="verigonder(false)">GİTMİYORUM</button>
     </div>
-    <div class="list-container">
-        <ul><h4 class="g-renk">Gelenler</h4><div id="gelenler"></div></ul>
-        <ul><h4 class="n-renk">Gitmeyenler</h4><div id="gitmeyenler"></div></ul>
+    <div class="list-box">
+        <div style="width: 48%;">
+            <h4>Gelenler</h4>
+            <div id="gelenler"></div>
+        </div>
+        <div style="width: 48%;">
+            <h4>Gitmeyenler</h4>
+            <div id="gitmeyenler"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    // ÖNEMLİ: URL'nin sonuna mutlaka .json ekle!
-    const url = "SENIN_FIREBASE_LINKIN/.json";
+    // Senin Firebase URL'n (Kodu tam bu haliyle kopyala)
+    const dbURL = "https://halisaha-47c07-default-rtdb.firebaseio.com/.json";
 
-    async function guncelle() {
-        const res = await fetch(url);
-        const data = await res.json();
-        const gDiv = document.getElementById('gelenler');
-        const nDiv = document.getElementById('gitmeyenler');
-        gDiv.innerHTML = ""; nDiv.innerHTML = "";
-        if(data) {
-            Object.values(data).forEach(p => {
-                const item = `<div>• ${p.ad}</div>`;
-                if(p.durum) gDiv.innerHTML += item;
-                else nDiv.innerHTML += item;
-            });
-        }
+    async function listeyiGuncelle() {
+        try {
+            const res = await fetch(dbURL);
+            const data = await res.json();
+            const gDiv = document.getElementById('gelenler');
+            const nDiv = document.getElementById('gitmeyenler');
+            gDiv.innerHTML = ""; nDiv.innerHTML = "";
+            
+            if(data) {
+                Object.values(data).forEach(kisi => {
+                    const html = `<div class="kisi">• ${kisi.ad}</div>`;
+                    if(kisi.durum) gDiv.innerHTML += html;
+                    else nDiv.innerHTML += html;
+                });
+            }
+        } catch(e) { console.error("Veri güncellenemedi."); }
     }
 
-    async function gonder(durum) {
-        const ad = document.getElementById('isim').value;
-        if(!ad) return alert("İsim yaz!");
-        await fetch(url, { method: 'POST', body: JSON.stringify({ad, durum}) });
-        document.getElementById('isim').value = "";
-        guncelle();
+    async function verigonder(durum) {
+        const ad = document.getElementById('adSoyad').value;
+        if(!ad) { alert("Lütfen isim yazın!"); return; }
+
+        await fetch(dbURL, {
+            method: 'POST',
+            body: JSON.stringify({ ad: ad, durum: durum })
+        });
+
+        document.getElementById('adSoyad').value = "";
+        listeyiGuncelle();
     }
-    guncelle();
-    setInterval(guncelle, 3000);
+
+    listeyiGuncelle();
+    setInterval(listeyiGuncelle, 4000); // 4 saniyede bir otomatik yeniler
 </script>
+
 </body>
 </html>
