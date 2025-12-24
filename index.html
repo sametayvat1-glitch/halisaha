@@ -6,14 +6,12 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 20px; }
         .card { background: #2c3e50; max-width: 450px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        input { padding: 12px; border-radius: 5px; border: none; width: 80%; margin-bottom: 15px; font-size: 16px; }
+        input { padding: 12px; border-radius: 5px; border: none; width: 80%; margin-bottom: 15px; font-size: 16px; color: black; }
         .btn-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
         button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; }
         .gel { background: #27ae60; color: white; }
         .git { background: #c0392b; color: white; }
-        button:hover { opacity: 0.8; transform: scale(1.05); }
         .liste-box { display: flex; justify-content: space-between; text-align: left; background: #34495e; padding: 15px; border-radius: 10px; }
-        h3 { border-bottom: 2px solid #555; padding-bottom: 5px; font-size: 16px; }
         ul { list-style: none; padding: 0; }
         li { padding: 5px 0; border-bottom: 1px dashed #555; font-size: 14px; }
         .gel-renk { color: #2ecc71; }
@@ -24,14 +22,11 @@
 
 <div class="card">
     <h2>⚽ Halı Saha Kadrosu</h2>
-    <p>Adını yaz ve durumunu seç:</p>
     <input type="text" id="isim" placeholder="Adın ve Soyadın...">
-    
     <div class="btn-group">
         <button class="gel" onclick="verigonder(true)">GELİYORUM</button>
         <button class="git" onclick="verigonder(false)">GELMİYORUM</button>
     </div>
-
     <div class="liste-box">
         <div style="width: 48%;">
             <h3 class="gel-renk">Gelenler</h3>
@@ -45,132 +40,42 @@
 </div>
 
 <script>
-    // ÖNEMLİ: Aşağıdaki URL'yi kendi Firebase URL'nle değiştir!
+    // BURAYI DİKKATLİCE DEĞİŞTİR:
+    // Firebase'den aldığın linki aşağıya yapıştır. Sonunda mutlaka /.json olsun!
     const dbURL = "BURAYA_KOPYALADIGIN_URL_GELECEK/.json";
 
-    // Veritabanından verileri çek ve ekrana yaz
     async function listeyiGuncelle() {
-        const response = await fetch(dbURL);
-        const data = await response.json();
-        
-        const gelUL = document.getElementById('gelenlerListesi');
-        const gitUL = document.getElementById('gitmeyenlerListesi');
-        gelUL.innerHTML = ""; gitUL.innerHTML = "";
-
-        for (let id in data) {
-            const li = document.createElement('li');
-            li.textContent = data[id].ad;
-            if (data[id].durum) { gelUL.appendChild(li); } 
-            else { gitUL.appendChild(li); }
-        }
+        try {
+            const response = await fetch(dbURL);
+            const data = await response.json();
+            const gelUL = document.getElementById('gelenlerListesi');
+            const gitUL = document.getElementById('gitmeyenlerListesi');
+            gelUL.innerHTML = ""; gitUL.innerHTML = "";
+            if(data) {
+                for (let id in data) {
+                    const li = document.createElement('li');
+                    li.textContent = data[id].ad;
+                    if (data[id].durum) { gelUL.appendChild(li); } 
+                    else { gitUL.appendChild(li); }
+                }
+            }
+        } catch(e) { console.log("Veri çekme hatası:", e); }
     }
 
-    // Butona basınca veriyi internete gönder
     async function verigonder(durum) {
         const ad = document.getElementById('isim').value;
         if (!ad) { alert("Lütfen adını yaz!"); return; }
-
-        await fetch(dbURL, {
-            method: 'POST',
-            body: JSON.stringify({ ad: ad, durum: durum })
-        });
-
-        document.getElementById('isim').value = "";
-        listeyiGuncelle(); // Listeyi anında yenile
+        try {
+            await fetch(dbURL, {
+                method: 'POST',
+                body: JSON.stringify({ ad: ad, durum: durum })
+            });
+            document.getElementById('isim').value = "";
+            listeyiGuncelle();
+        } catch(e) { alert("Kaydetme hatası! Linki kontrol et."); }
     }
 
-    // Sayfa açıldığında listeyi yükle
     listeyiGuncelle();
-    // Her 5 saniyede bir listeyi otomatik güncelle (Canlı takip)
-    setInterval(listeyiGuncelle, 5000);
-</script>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <title>Canlı Halı Saha Listesi</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 20px; }
-        .card { background: #2c3e50; max-width: 450px; margin: auto; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        input { padding: 12px; border-radius: 5px; border: none; width: 80%; margin-bottom: 15px; font-size: 16px; }
-        .btn-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
-        button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; flex: 1; transition: 0.2s; }
-        .gel { background: #27ae60; color: white; }
-        .git { background: #c0392b; color: white; }
-        button:hover { opacity: 0.8; transform: scale(1.05); }
-        .liste-box { display: flex; justify-content: space-between; text-align: left; background: #34495e; padding: 15px; border-radius: 10px; }
-        h3 { border-bottom: 2px solid #555; padding-bottom: 5px; font-size: 16px; }
-        ul { list-style: none; padding: 0; }
-        li { padding: 5px 0; border-bottom: 1px dashed #555; font-size: 14px; }
-        .gel-renk { color: #2ecc71; }
-        .git-renk { color: #e74c3c; }
-    </style>
-</head>
-<body>
-
-<div class="card">
-    <h2>⚽ Halı Saha Kadrosu</h2>
-    <p>Adını yaz ve durumunu seç:</p>
-    <input type="text" id="isim" placeholder="Adın ve Soyadın...">
-    
-    <div class="btn-group">
-        <button class="gel" onclick="verigonder(true)">GELİYORUM</button>
-        <button class="git" onclick="verigonder(false)">GELMİYORUM</button>
-    </div>
-
-    <div class="liste-box">
-        <div style="width: 48%;">
-            <h3 class="gel-renk">Gelenler</h3>
-            <ul id="gelenlerListesi"></ul>
-        </div>
-        <div style="width: 48%;">
-            <h3 class="git-renk">Gelmeyenler</h3>
-            <ul id="gitmeyenlerListesi"></ul>
-        </div>
-    </div>
-</div>
-
-<script>
-    // ÖNEMLİ: Aşağıdaki URL'yi kendi Firebase URL'nle değiştir!
-    const dbURL = "BURAYA_KOPYALADIGIN_URL_GELECEK/.json";
-
-    // Veritabanından verileri çek ve ekrana yaz
-    async function listeyiGuncelle() {
-        const response = await fetch(dbURL);
-        const data = await response.json();
-        
-        const gelUL = document.getElementById('gelenlerListesi');
-        const gitUL = document.getElementById('gitmeyenlerListesi');
-        gelUL.innerHTML = ""; gitUL.innerHTML = "";
-
-        for (let id in data) {
-            const li = document.createElement('li');
-            li.textContent = data[id].ad;
-            if (data[id].durum) { gelUL.appendChild(li); } 
-            else { gitUL.appendChild(li); }
-        }
-    }
-
-    // Butona basınca veriyi internete gönder
-    async function verigonder(durum) {
-        const ad = document.getElementById('isim').value;
-        if (!ad) { alert("Lütfen adını yaz!"); return; }
-
-        await fetch(dbURL, {
-            method: 'POST',
-            body: JSON.stringify({ ad: ad, durum: durum })
-        });
-
-        document.getElementById('isim').value = "";
-        listeyiGuncelle(); // Listeyi anında yenile
-    }
-
-    // Sayfa açıldığında listeyi yükle
-    listeyiGuncelle();
-    // Her 5 saniyede bir listeyi otomatik güncelle (Canlı takip)
     setInterval(listeyiGuncelle, 5000);
 </script>
 
