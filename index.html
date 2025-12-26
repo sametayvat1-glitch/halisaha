@@ -22,8 +22,10 @@
         .kaleci-text { font-size: 20px; color: #f1c40f; font-weight: bold; margin: 10px 0; min-height: 30px; }
         .btn-zar { background: #f1c40f; color: #000; width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px; font-size: 14px; }
 
-        /* İmza Alanı */
-        .signature { text-align: left; color: #ff0000; font-weight: bold; font-size: 14px; margin-top: 10px; }
+        /* Alt Bilgi Alanı */
+        .info-area { text-align: left; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; }
+        .konum { color: #3498db; font-weight: bold; font-size: 15px; margin-bottom: 5px; }
+        .signature { color: #ff0000; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -55,7 +57,10 @@
         <button class="btn-zar" onclick="kaleciSec()">🎲 GELENLERDEN SEÇ</button>
     </div>
 
-    <div class="signature">By: Samet Ayvat</div>
+    <div class="info-area">
+        <div class="konum">Konum📍: Beylikbağı Stadı</div>
+        <div class="signature">By: Samet Ayvat</div>
+    </div>
 </div>
 
 <script>
@@ -66,16 +71,13 @@
         try {
             const res = await fetch(dbURL + ".json");
             const data = await res.json();
-            
             const gList = document.getElementById('gelenler');
             const nList = document.getElementById('gitmeyenler');
             const kText = document.getElementById('mevcut-kaleci');
             const sayac = document.getElementById('toplam');
-            
             gList.innerHTML = ""; nList.innerHTML = "";
             gelenlerDizisi = [];
             let count = 0;
-
             if(data) {
                 if(data.liste) {
                     Object.values(data.liste).forEach(item => {
@@ -84,14 +86,10 @@
                             gList.innerHTML += div; 
                             gelenlerDizisi.push(item.ad); 
                             count++; 
-                        } else { 
-                            nList.innerHTML += div; 
-                        }
+                        } else { nList.innerHTML += div; }
                     });
                 }
-                if(data.aktifKaleci) {
-                    kText.innerText = data.aktifKaleci.ad;
-                }
+                if(data.aktifKaleci) { kText.innerText = data.aktifKaleci.ad; }
             }
             sayac.innerText = count;
         } catch(e) { console.log("Hata:", e); }
@@ -100,11 +98,7 @@
     async function ekle(durum) {
         const ad = document.getElementById('user-name').value;
         if(!ad) return alert("İsim yaz kanka!");
-
-        await fetch(`${dbURL}liste.json`, {
-            method: 'POST',
-            body: JSON.stringify({ ad: ad, durum: durum })
-        });
+        await fetch(`${dbURL}liste.json`, { method: 'POST', body: JSON.stringify({ ad, durum }) });
         document.getElementById('user-name').value = "";
         yukle();
     }
@@ -112,12 +106,7 @@
     async function kaleciSec() {
         if(gelenlerDizisi.length === 0) return alert("Önce gelenler listesine isim ekleyin!");
         const sansliKisi = gelenlerDizisi[Math.floor(Math.random() * gelenlerDizisi.length)];
-        
-        await fetch(`${dbURL}aktifKaleci.json`, {
-            method: 'PUT',
-            body: JSON.stringify({ ad: sansliKisi })
-        });
-        
+        await fetch(`${dbURL}aktifKaleci.json`, { method: 'PUT', body: JSON.stringify({ ad: sansliKisi }) });
         alert("Sistem rastgele seçti: " + sansliKisi);
         yukle();
     }
