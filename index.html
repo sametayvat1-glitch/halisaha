@@ -20,14 +20,14 @@
         /* Rastgele Kaleci Alanı */
         .kaleci-box { background: #2c3e50; padding: 15px; border-radius: 15px; border: 2px solid #f1c40f; }
         .kaleci-text { font-size: 20px; color: #f1c40f; font-weight: bold; margin: 10px 0; min-height: 30px; }
-        .btn-zar { background: #f1c40f; color: #000; width: 100%; margin-top: 10px; padding: 10px; }
+        .btn-zar { background: #f1c40f; color: #000; width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div class="sayac">KADRO: <span id="toplam">0</span></div>
-    <h2>⚽ Saha Takip</h2>
+    <h2>⚽ Halı Saha Takip</h2>
     
     <input type="text" id="user-name" placeholder="Adınızı yazın...">
     <div class="btns">
@@ -49,7 +49,7 @@
     <div class="kaleci-box">
         <h4 style="border:none; color:#f1c40f; margin:0;">🧤 AYIN KALECİSİ (RASTGELE)</h4>
         <div id="mevcut-kaleci" class="kaleci-text">Henüz Seçilmedi</div>
-        <button class="btn-zar" onclick="kaleciSec()">🎲 LİSTEDEN RASTGELE SEÇ</button>
+        <button class="btn-zar" onclick="kaleciSec()">🎲 GELENLERDEN RASTGELE SEÇ</button>
     </div>
 </div>
 
@@ -71,18 +71,20 @@
         let count = 0;
 
         if(data) {
+            // Liste Güncelleme
             if(data.liste) {
                 Object.values(data.liste).forEach(item => {
                     const div = `<div class="name">• ${item.ad}</div>`;
                     if(item.durum) { 
                         gList.innerHTML += div; 
-                        gelenlerDizisi.push(item.ad); // Rastgele seçim için gelenleri diziye ekle
+                        gelenlerDizisi.push(item.ad); 
                         count++; 
                     } else { 
                         nList.innerHTML += div; 
                     }
                 });
             }
+            // Kayıtlı Kaleciyi Getir
             if(data.aktifKaleci) {
                 kText.innerText = data.aktifKaleci.ad;
             }
@@ -96,19 +98,19 @@
 
         await fetch(`${dbURL}liste.json`, {
             method: 'POST',
-            body: JSON.stringify({ ad, durum })
+            body: JSON.stringify({ ad: ad, durum: durum })
         });
         document.getElementById('user-name').value = "";
         yukle();
     }
 
     async function kaleciSec() {
-        if(gelenlerDizisi.length === 0) return alert("Listede kimse yok, önce isim ekleyin!");
+        if(gelenlerDizisi.length === 0) return alert("Önce gelenler listesine isim ekleyin!");
         
-        // Gelenler arasından rastgele bir isim seç
+        // Gelenler arasından rastgele bir isim seçiyoruz
         const sansliKisi = gelenlerDizisi[Math.floor(Math.random() * gelenlerDizisi.length)];
         
-        // Firebase'e seçilen kaleciyi kaydet
+        // Firebase'e "aktifKaleci" olarak kaydediyoruz
         await fetch(`${dbURL}aktifKaleci.json`, {
             method: 'PUT',
             body: JSON.stringify({ ad: sansliKisi })
@@ -119,7 +121,7 @@
     }
 
     yukle();
-    setInterval(yukle, 4000);
+    setInterval(yukle, 4000); // 4 saniyede bir otomatik tazele
 </script>
 
 </body>
