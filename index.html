@@ -3,77 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Halı Saha Listesi</title>
+    <title>Halı Saha Kadrosu</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 20px; }
-        .card { background: #1e1e1e; max-width: 400px; margin: auto; padding: 25px; border-radius: 15px; border: 1px solid #333; }
-        input { padding: 12px; width: 85%; margin-bottom: 15px; border-radius: 8px; border: 1px solid #444; background: #252525; color: white; }
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 15px; }
+        .card { background: #1e1e1e; max-width: 450px; margin: auto; padding: 25px; border-radius: 20px; border: 1px solid #333; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .sayac { position: absolute; top: 15px; right: 15px; background: #2e7d32; padding: 6px 14px; border-radius: 50px; font-size: 13px; font-weight: bold; }
+        input { padding: 12px; width: 85%; margin-bottom: 12px; border-radius: 10px; border: 1px solid #444; background: #252525; color: white; font-size: 16px; }
         .btns { display: flex; gap: 10px; margin-bottom: 20px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; }
-        .btn-g { background: #2e7d32; } .btn-n { background: #c62828; }
-        .list-area { display: flex; justify-content: space-between; text-align: left; background: #252525; padding: 15px; border-radius: 10px; min-height: 100px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        .btn-g { background: #27ae60; } .btn-n { background: #c0392b; }
+        .list-box { display: flex; justify-content: space-between; text-align: left; background: #252525; padding: 15px; border-radius: 12px; min-height: 150px; margin-bottom: 20px; }
         .col { width: 48%; }
-        h4 { margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #444; }
-        .name { font-size: 14px; margin-bottom: 5px; color: #ddd; }
+        h4 { margin: 0 0 10px 0; font-size: 14px; border-bottom: 1px solid #444; padding-bottom: 5px; }
+        .name { font-size: 14px; margin-bottom: 6px; color: #ddd; border-bottom: 1px solid #333; padding-bottom: 2px; }
+        
+        /* Rastgele Kaleci Alanı */
+        .kaleci-box { background: #2c3e50; padding: 15px; border-radius: 15px; border: 2px solid #f1c40f; }
+        .kaleci-text { font-size: 20px; color: #f1c40f; font-weight: bold; margin: 10px 0; min-height: 30px; }
+        .btn-zar { background: #f1c40f; color: #000; width: 100%; margin-top: 10px; padding: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>⚽ Halı Saha Listesi</h2>
-    <input type="text" id="user-name" placeholder="Adını yaz...">
+    <div class="sayac">KADRO: <span id="toplam">0</span></div>
+    <h2>⚽ Saha Takip</h2>
+    
+    <input type="text" id="user-name" placeholder="Adınızı yazın...">
     <div class="btns">
-        <button class="btn-g" onclick="sendData(true)">GELİYORUM</button>
-        <button class="btn-n" onclick="sendData(false)">YOKUM</button>
+        <button class="btn-g" onclick="ekle(true)">GELİYORUM</button>
+        <button class="btn-n" onclick="ekle(false)">YOKUM</button>
     </div>
-    <div class="list-area">
+
+    <div class="list-box">
         <div class="col">
-            <h4 style="color: #4caf50;">GELENLER</h4>
+            <h4 style="color: #2ecc71;">GELENLER</h4>
             <div id="gelenler"></div>
         </div>
         <div class="col">
-            <h4 style="color: #f44336;">YOKLAR</h4>
+            <h4 style="color: #e74c3c;">YOKLAR</h4>
             <div id="gitmeyenler"></div>
         </div>
+    </div>
+
+    <div class="kaleci-box">
+        <h4 style="border:none; color:#f1c40f; margin:0;">🧤 AYIN KALECİSİ (RASTGELE)</h4>
+        <div id="mevcut-kaleci" class="kaleci-text">Henüz Seçilmedi</div>
+        <button class="btn-zar" onclick="kaleciSec()">🎲 LİSTEDEN RASTGELE SEÇ</button>
     </div>
 </div>
 
 <script>
-    const url = "https://halisaha-47c07-default-rtdb.firebaseio.com/.json";
+    const dbURL = "https://halisaha-47c07-default-rtdb.firebaseio.com/";
+    let gelenlerDizisi = [];
 
-    async function updateList() {
-        const res = await fetch(url);
+    async function yukle() {
+        const res = await fetch(dbURL + ".json");
         const data = await res.json();
+        
         const gList = document.getElementById('gelenler');
         const nList = document.getElementById('gitmeyenler');
-        gList.innerHTML = ""; nList.innerHTML = "";
+        const kText = document.getElementById('mevcut-kaleci');
+        const sayac = document.getElementById('toplam');
         
+        gList.innerHTML = ""; nList.innerHTML = "";
+        gelenlerDizisi = [];
+        let count = 0;
+
         if(data) {
-            Object.values(data).forEach(item => {
-                // Hem 'ad' hem 'isim' kontrolü yapıyoruz ki hata payı kalmasın
-                const nameToShow = item.ad || item.isim || "İsimsiz";
-                const div = `<div class="name">• ${nameToShow}</div>`;
-                if(item.durum === true) { gList.innerHTML += div; } 
-                else { nList.innerHTML += div; }
-            });
+            if(data.liste) {
+                Object.values(data.liste).forEach(item => {
+                    const div = `<div class="name">• ${item.ad}</div>`;
+                    if(item.durum) { 
+                        gList.innerHTML += div; 
+                        gelenlerDizisi.push(item.ad); // Rastgele seçim için gelenleri diziye ekle
+                        count++; 
+                    } else { 
+                        nList.innerHTML += div; 
+                    }
+                });
+            }
+            if(data.aktifKaleci) {
+                kText.innerText = data.aktifKaleci.ad;
+            }
         }
+        sayac.innerText = count;
     }
 
-    async function sendData(status) {
-        const input = document.getElementById('user-name');
-        if(!input.value) return alert("Adını yaz kanka!");
+    async function ekle(durum) {
+        const ad = document.getElementById('user-name').value;
+        if(!ad) return alert("İsim yaz kanka!");
 
-        await fetch(url, {
+        await fetch(`${dbURL}liste.json`, {
             method: 'POST',
-            body: JSON.stringify({ ad: input.value, durum: status })
+            body: JSON.stringify({ ad, durum })
         });
-
-        input.value = "";
-        updateList();
+        document.getElementById('user-name').value = "";
+        yukle();
     }
 
-    updateList();
-    setInterval(updateList, 3000);
+    async function kaleciSec() {
+        if(gelenlerDizisi.length === 0) return alert("Listede kimse yok, önce isim ekleyin!");
+        
+        // Gelenler arasından rastgele bir isim seç
+        const sansliKisi = gelenlerDizisi[Math.floor(Math.random() * gelenlerDizisi.length)];
+        
+        // Firebase'e seçilen kaleciyi kaydet
+        await fetch(`${dbURL}aktifKaleci.json`, {
+            method: 'PUT',
+            body: JSON.stringify({ ad: sansliKisi })
+        });
+        
+        alert("Sistem rastgele seçti: " + sansliKisi);
+        yukle();
+    }
+
+    yukle();
+    setInterval(yukle, 4000);
 </script>
+
 </body>
 </html>
