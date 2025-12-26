@@ -18,9 +18,12 @@
         .name { font-size: 14px; margin-bottom: 6px; color: #ddd; border-bottom: 1px solid #333; padding-bottom: 2px; }
         
         /* Rastgele Kaleci Alanı */
-        .kaleci-box { background: #2c3e50; padding: 15px; border-radius: 15px; border: 2px solid #f1c40f; }
+        .kaleci-box { background: #2c3e50; padding: 15px; border-radius: 15px; border: 2px solid #f1c40f; margin-bottom: 15px; }
         .kaleci-text { font-size: 20px; color: #f1c40f; font-weight: bold; margin: 10px 0; min-height: 30px; }
         .btn-zar { background: #f1c40f; color: #000; width: 100%; margin-top: 10px; padding: 12px; border-radius: 10px; font-size: 14px; }
+
+        /* İmza Alanı */
+        .signature { text-align: left; color: #ff0000; font-weight: bold; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -47,10 +50,12 @@
     </div>
 
     <div class="kaleci-box">
-        <h4 style="border:none; color:#f1c40f; margin:0;">🧤 AYIN KALECİSİ (RASTGELE)</h4>
+        <h4 style="border:none; color:#f1c40f; margin:0;">🧤 RASTGELE KALECİ</h4>
         <div id="mevcut-kaleci" class="kaleci-text">Henüz Seçilmedi</div>
-        <button class="btn-zar" onclick="kaleciSec()">🎲 GELENLERDEN RASTGELE SEÇ</button>
+        <button class="btn-zar" onclick="kaleciSec()">🎲 GELENLERDEN SEÇ</button>
     </div>
+
+    <div class="signature">By: Samet Ayvat</div>
 </div>
 
 <script>
@@ -58,38 +63,38 @@
     let gelenlerDizisi = [];
 
     async function yukle() {
-        const res = await fetch(dbURL + ".json");
-        const data = await res.json();
-        
-        const gList = document.getElementById('gelenler');
-        const nList = document.getElementById('gitmeyenler');
-        const kText = document.getElementById('mevcut-kaleci');
-        const sayac = document.getElementById('toplam');
-        
-        gList.innerHTML = ""; nList.innerHTML = "";
-        gelenlerDizisi = [];
-        let count = 0;
+        try {
+            const res = await fetch(dbURL + ".json");
+            const data = await res.json();
+            
+            const gList = document.getElementById('gelenler');
+            const nList = document.getElementById('gitmeyenler');
+            const kText = document.getElementById('mevcut-kaleci');
+            const sayac = document.getElementById('toplam');
+            
+            gList.innerHTML = ""; nList.innerHTML = "";
+            gelenlerDizisi = [];
+            let count = 0;
 
-        if(data) {
-            // Liste Güncelleme
-            if(data.liste) {
-                Object.values(data.liste).forEach(item => {
-                    const div = `<div class="name">• ${item.ad}</div>`;
-                    if(item.durum) { 
-                        gList.innerHTML += div; 
-                        gelenlerDizisi.push(item.ad); 
-                        count++; 
-                    } else { 
-                        nList.innerHTML += div; 
-                    }
-                });
+            if(data) {
+                if(data.liste) {
+                    Object.values(data.liste).forEach(item => {
+                        const div = `<div class="name">• ${item.ad}</div>`;
+                        if(item.durum) { 
+                            gList.innerHTML += div; 
+                            gelenlerDizisi.push(item.ad); 
+                            count++; 
+                        } else { 
+                            nList.innerHTML += div; 
+                        }
+                    });
+                }
+                if(data.aktifKaleci) {
+                    kText.innerText = data.aktifKaleci.ad;
+                }
             }
-            // Kayıtlı Kaleciyi Getir
-            if(data.aktifKaleci) {
-                kText.innerText = data.aktifKaleci.ad;
-            }
-        }
-        sayac.innerText = count;
+            sayac.innerText = count;
+        } catch(e) { console.log("Hata:", e); }
     }
 
     async function ekle(durum) {
@@ -106,11 +111,8 @@
 
     async function kaleciSec() {
         if(gelenlerDizisi.length === 0) return alert("Önce gelenler listesine isim ekleyin!");
-        
-        // Gelenler arasından rastgele bir isim seçiyoruz
         const sansliKisi = gelenlerDizisi[Math.floor(Math.random() * gelenlerDizisi.length)];
         
-        // Firebase'e "aktifKaleci" olarak kaydediyoruz
         await fetch(`${dbURL}aktifKaleci.json`, {
             method: 'PUT',
             body: JSON.stringify({ ad: sansliKisi })
@@ -121,7 +123,7 @@
     }
 
     yukle();
-    setInterval(yukle, 4000); // 4 saniyede bir otomatik tazele
+    setInterval(yukle, 4000);
 </script>
 
 </body>
